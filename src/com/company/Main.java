@@ -12,7 +12,6 @@ public class Main {
 
     public static void main(String[] args) throws IOException{
         int userOption;
-        String receivedTime;
         Scanner scanIn = new Scanner(System.in);
 
         do {
@@ -24,21 +23,16 @@ public class Main {
                 userOption = IO_ERROR;
             }
 
-            switch (userOption) {
-                case SELF_OPT:
-                    receivedTime = getTime();
-                    System.out.println("Received time "+receivedTime+"\n");
-                    break;
-                case BROADCASTING_OPT:
-                    //broadcastTime();
-                    break;
-                case EXIT_OPT:
-                    break;
-                default:
-                    System.out.println("Incorrect option! Try again\n");
-                    break;
-            }
+            if (userOption == SELF_OPT || userOption == BROADCASTING_OPT) {
+                byte[] buf = new byte[256];
 
+                DatagramPacket packet = (userOption == SELF_OPT) ? getTime(buf) : broadcastTime(buf);
+                String receivedTime = new String(packet.getData());
+                System.out.println("Received time: "+receivedTime+"\n");
+
+            } else if (userOption >= IO_ERROR) {
+                System.out.println("Incorrect option! Try again!\n");
+            }
         } while (userOption != EXIT_OPT);
     }
 
@@ -46,20 +40,30 @@ public class Main {
         System.out.printf("0 - require time for self\n1 - require time for all\n2 - exit\n");
     }
 
-    public static String getTime() throws IOException {
+    private static DatagramPacket getTime(byte[] buffer) throws IOException {
         DatagramSocket socket = new DatagramSocket();
-        byte[] buf = new byte[256];
         InetAddress address = InetAddress.getByName("192.168.100.1");
-        DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 8888);
-
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, address, 8888);
         socket.send(packet);
-        packet = new DatagramPacket(buf, buf.length);
 
+        packet = new DatagramPacket(buffer, buffer.length);
         socket.receive(packet);
-        String receivedTime = new String(packet.getData(), 0, packet.getLength());
         socket.close();
 
-        return receivedTime;
+        return  packet;
+    }
+
+    private static DatagramPacket broadcastTime(byte[] buffer) throws IOException {
+        MulticastSocket socket = new MulticastSocket(8888);
+        InetAddress group = InetAddress.getByName("192.168.100.255");
+        socket.joinGroup(group);
+
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+        socket.receive(packet);
+        socket.leaveGroup(group);
+        socket.close();
+
+        return packet;
     }
 }
 
