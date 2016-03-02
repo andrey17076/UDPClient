@@ -11,7 +11,7 @@ public class Main {
     private static final int IO_ERROR = 3;
     private static final Scanner scanIn = new Scanner(System.in);
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         UDPClient client = new UDPClient();
         client.start();
 
@@ -47,8 +47,8 @@ class UDPClient extends Thread {
         }
 
         try {
-            socket = new DatagramSocket(PORT, address);
-            //socket.setBroadcast(true);
+            socket = new DatagramSocket(PORT);
+            socket.setBroadcast(true);
         } catch (SocketException e) {
             System.err.println(e);
         }
@@ -70,7 +70,7 @@ class UDPClient extends Thread {
             try {
                 socket.receive(packet);
                 String receivedTime = new String(packet.getData());
-                System.out.println("Received time: " + receivedTime + "\n");
+                System.out.println("Received data: " + receivedTime);
             } catch (IOException e) {
                 System.err.println(e);
             }
